@@ -1,0 +1,41 @@
+*FeatureManager*
+
+Provides the necessary controller level logic for enabling/disabling applications features on the fly.
+The default 'invalid feature access' behaviour is to raise an Authorization error using base_auth.
+You can customize the behaviour by providing your own handlers.
+
+Note that the low level infrastructure for tracking the 'enabled' state of the feature
+(like storing using ActiveRecord) has to be maintained by the application itself.
+
+This plugin provides only *controller* level authorization for features. Any access to the feature
+through one of the controllers/actions will be guarded. But, other references to the feautre
+in *some other* pages must be conditionally disabled by the application.
+
+*Usage*
+
+REGISTER the features in your application as follows
+
+  class ApplicationController < ActionController::Base
+    # 'File sharing' feautre
+    add_feature('File sharing', [:files, :file_comments])
+    add_feature('Wiki', [:wiki], [:controller => :users, :action => :my_pages])
+  end
+
+Enable the features that you want to use by calling enable_features in your controller. This enabled
+features list may come from models, session, etc.,
+
+  enable_features(['Wiki'])
+
+Thats it! Now when someone accesses any of the pages that is related to file sharing feature,
+it will result in an authorization error.
+
+If you want to handle the invalid access gracefully, just override the 'handle_invalid_feature_access'
+method in your controller
+
+  def handle_invalid_feature_access(feature_name)
+    flash[:error] = "Sorry. #{feature_name} feature is not enabled"
+    redirect_to some_path
+  end
+
+=========================================================
+Copyright (c) 2009 Vikram Venkatesan (vikram@chronus.com)
